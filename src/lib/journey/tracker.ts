@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client'
+
 import type { JourneyStage, JourneyState, JourneyReentry } from './types'
 
 const STORAGE_KEY = 'bloom_journey_v1'
@@ -69,17 +69,20 @@ export async function syncStageToSupabase(stage: JourneyStage): Promise<void> {
   if (!state?.journeyId) return
 
   try {
-    const supabase = createClient()
-    await supabase.from('journey_events').insert({
-      journey_id: state.journeyId,
-      stage,
-      state_code: state.stateCode ?? null,
-      metadata: {},
+    await fetch('/api/journey', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        journeyId: state.journeyId,
+        stage,
+        stateCode: state.stateCode ?? undefined,
+      }),
     })
   } catch {
     // Fire-and-forget — never block the UI on sync failure
   }
 }
+
 
 export function checkReentry(): JourneyReentry {
   const state = getJourneyState()
